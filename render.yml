@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: kukuruzik-bot
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: python bot.py
+    envVars:
+      - key: TOKEN
+        value: 7207628297:AAHMB7xcxu9-CbnWGzsAZLYnjp9sHgqPle4
+      - key: CHANNEL_USERNAME
+        value: kukuruzikuz
+      - key: ADMIN_ID
+        value: "2071181"  # или твой реальный Telegram ID
+      - key: RENDER_EXTERNAL_URL
+        value: https://kukuruzik-bot.onrender.com
