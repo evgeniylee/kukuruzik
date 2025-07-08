@@ -6,6 +6,28 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.utils.executor import start_webhook
 
+from aiogram import executor
+from config import WEBHOOK_URL, WEBHOOK_PATH
+
+async def on_startup(dp):
+    await bot.set_webhook(WEBHOOK_URL)
+
+async def on_shutdown(dp):
+    await bot.delete_webhook()
+
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        skip_updates=True,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        host="0.0.0.0",
+        port=int(os.getenv('PORT', 5000))
+    )
+
+
 # Конфиг из переменных окружения
 TOKEN = os.getenv("TOKEN")
 CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "kukuruzikuz")  # если не задано — дефолт
