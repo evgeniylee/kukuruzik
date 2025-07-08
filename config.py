@@ -1,7 +1,7 @@
-TOKEN = "7207628297:AAHMB7xcxu9-CbnWGzsAZLYnjp9sHgqPle4"
-CHANNEL_USERNAME = "kukuruzikuz"
+import os
 
-# Адрес твоего веб-приложения (Render даст публичный адрес)
-WEBHOOK_URL = "https://имя-приложения.onrender.com"  
-WEBAPP_HOST = "0.0.0.0"
-WEBAPP_PORT = 10000  # Render использует этот порт
+TOKEN = os.getenv("BOT_TOKEN")
+CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME")
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")  # зададим позже на Render
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
