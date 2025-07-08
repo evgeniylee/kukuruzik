@@ -7,7 +7,7 @@ services:
     startCommand: python bot.py
     envVars:
       - key: BOT_TOKEN
-        value: <твоя переменная>
+        value: <7207628297:AAHMB7xcxu9-CbnWGzsAZLYnjp9sHgqPle4>
       - key: CHANNEL_USERNAME
         value: kukuruzikuz
       - key: WEBHOOK_HOST
