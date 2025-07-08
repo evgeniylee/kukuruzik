@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kukuruzik-bot
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        value: <твоя переменная>
+      - key: CHANNEL_USERNAME
+        value: kukuruzikuz
+      - key: WEBHOOK_HOST
+        value: https://<render-subdomain>.onrender.com
