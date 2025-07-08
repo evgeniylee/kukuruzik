@@ -2,38 +2,16 @@ import os
 import json
 import random
 from datetime import datetime
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.utils.executor import start_webhook
 
-from aiogram import executor
-from config import WEBHOOK_URL, WEBHOOK_PATH
-
-async def on_startup(dp):
-    await bot.set_webhook(WEBHOOK_URL)
-
-async def on_shutdown(dp):
-    await bot.delete_webhook()
-
-if __name__ == '__main__':
-    from aiogram import executor
-    executor.start_webhook(
-        dispatcher=dp,
-        webhook_path=WEBHOOK_PATH,
-        skip_updates=True,
-        on_startup=on_startup,
-        on_shutdown=on_shutdown,
-        host="0.0.0.0",
-        port=int(os.getenv('PORT', 5000))
-    )
-
-
-# Конфиг из переменных окружения
+# ========== Конфигурация ==========
 TOKEN = os.getenv("TOKEN")
-CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "kukuruzikuz")  # если не задано — дефолт
-ADMIN_ID = int(os.getenv("ADMIN_ID", "2071181"))  # замените на свой ID
+CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "kukuruzikuz")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "2071181"))
 
-# Вебхук и вебсервер (Render задаёт RENDER_EXTERNAL_URL и PORT)
 WEBHOOK_HOST = os.getenv("RENDER_EXTERNAL_URL")
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
@@ -44,9 +22,7 @@ WEBAPP_PORT = int(os.getenv("PORT", default=8000))
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-
 # ========== Работа с БД ==========
-
 def load_data():
     os.makedirs("data", exist_ok=True)
     db_path = "data/users.json"
@@ -60,9 +36,7 @@ def save_data(data):
     with open("data/users.json", "w") as f:
         json.dump(data, f, indent=2)
 
-
 # ========== Обработчики ==========
-
 @dp.message_handler(commands=["start"])
 async def start_command(message: types.Message):
     user_id = str(message.from_user.id)
@@ -73,7 +47,6 @@ async def start_command(message: types.Message):
         save_data(data)
 
     await message.answer("👋 Добро пожаловать в акцию KUKURUZIK!\nПожалуйста, введите ваше имя:")
-
 
 @dp.message_handler(lambda m: True)
 async def get_name(message: types.Message):
@@ -87,7 +60,6 @@ async def get_name(message: types.Message):
         keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(KeyboardButton("📞 Отправить контакт", request_contact=True))
         await message.answer("Отправьте ваш номер телефона:", reply_markup=keyboard)
-
 
 @dp.message_handler(content_types=types.ContentType.CONTACT)
 async def handle_contact(message: types.Message):
@@ -105,7 +77,6 @@ async def handle_contact(message: types.Message):
         reply_markup=keyboard
     )
 
-
 @dp.message_handler(lambda msg: msg.text == "✅ Я подписался")
 async def check_subscription(message: types.Message):
     user_id = message.from_user.id
@@ -122,7 +93,6 @@ async def check_subscription(message: types.Message):
         await message.answer("❗ Не удалось проверить подписку. Попробуйте позже.")
         print(e)
 
-
 @dp.message_handler(commands=["draw"])
 async def draw_winner(message: types.Message):
     if message.from_user.id != ADMIN_ID:
@@ -138,17 +108,12 @@ async def draw_winner(message: types.Message):
     winner = random.choice(participants)
     await message.answer(f"🏆 Победитель: {winner['name']} ({winner['phone']})")
 
-
-# ========== Вебхук ==========
-
+# ========== Webhook запуск ==========
 async def on_startup(dp):
     await bot.set_webhook(WEBHOOK_URL)
 
 async def on_shutdown(dp):
     await bot.delete_webhook()
-
-
-# ========== Запуск ==========
 
 if __name__ == "__main__":
     start_webhook(
