@@ -14,3 +14,5 @@ services:
         value: "2071181"  # или твой реальный Telegram ID
       - key: RENDER_EXTERNAL_URL
         value: https://kukuruzik-bot.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.10.13
