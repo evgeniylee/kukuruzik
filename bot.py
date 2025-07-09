@@ -5,18 +5,23 @@ from datetime import datetime
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from telegram.ext import (
     ApplicationBuilder,
-    ContextTypes,
     CommandHandler,
     MessageHandler,
+    ContextTypes,
     filters,
 )
 
+# === Переменные окружения ===
 TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_USERNAME = os.getenv("CHANNEL_USERNAME", "kukuruzikuz")
-WEBHOOK_URL = os.getenv("RENDER_EXTERNAL_URL") + "/webhook"
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")
 PORT = int(os.getenv("PORT", 8000))
+ADMIN_ID = int(os.getenv("ADMIN_ID", "2071181"))
 
-# База данных
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
+# === Работа с "базой данных" (файл JSON) ===
 def load_data():
     os.makedirs("data", exist_ok=True)
     path = "data/users.json"
@@ -30,13 +35,18 @@ def save_data(data):
     with open("data/users.json", "w") as f:
         json.dump(data, f, indent=2)
 
-
-# Обработчики
+# === Хендлеры ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     data = load_data()
+
     if user_id not in data:
-        data[user_id] = {"name": None, "phone": None, "subscribed": False, "joined_at": datetime.now().isoformat()}
+        data[user_id] = {
+            "name": None,
+            "phone": None,
+            "subscribed": False,
+            "joined_at": datetime.now().isoformat()
+        }
         save_data(data)
 
     await update.message.reply_text("👋 Добро пожаловать в акцию KUKURUZIK!\nПожалуйста, введите ваше имя:")
@@ -58,7 +68,6 @@ async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     data = load_data()
-
     data[user_id]["phone"] = update.message.contact.phone_number
     save_data(data)
 
@@ -68,31 +77,31 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(
         f"Теперь подпишитесь на канал: https://t.me/{CHANNEL_USERNAME}\n"
-        f"Затем нажмите кнопку ниже, чтобы подтвердить:",
+        "Затем нажмите кнопку ниже, чтобы подтвердить:",
         reply_markup=keyboard
     )
 
 async def check_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     try:
-        member = await context.bot.get_chat_member(chat_id=f"@{CHANNEL_USERNAME}", user_id=user_id)
-        if member.status in ["member", "administrator", "creator"]:
+        chat_member = await context.bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
+        if chat_member.status in ["member", "administrator", "creator"]:
             data = load_data()
             data[str(user_id)]["subscribed"] = True
             save_data(data)
             await update.message.reply_text("🎉 Отлично! Вы участвуете в розыгрыше!", reply_markup=ReplyKeyboardRemove())
         else:
             await update.message.reply_text("❌ Вы ещё не подписаны. Подпишитесь и нажмите кнопку снова.")
-    except Exception:
+    except Exception as e:
         await update.message.reply_text("❗ Не удалось проверить подписку. Попробуйте позже.")
+        print(e)
 
 async def draw(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if str(update.effective_user.id) != os.getenv("ADMIN_ID", "2071181"):
+    if update.effective_user.id != ADMIN_ID:
         return
 
     data = load_data()
     participants = [u for u in data.values() if u.get("subscribed")]
-
     if not participants:
         await update.message.reply_text("❌ Нет участников для розыгрыша.")
         return
@@ -100,15 +109,9 @@ async def draw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     winner = random.choice(participants)
     await update.message.reply_text(f"🏆 Победитель: {winner['name']} ({winner['phone']})")
 
-
-# Запуск
+# === Запуск приложения ===
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        url_path="webhook",
-        webhook_url=WEBHOOK_URL,
-    ).build()
+    app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("draw", draw))
@@ -116,4 +119,8 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.CONTACT, handle_contact))
     app.add_handler(MessageHandler(filters.TEXT & filters.Regex("✅ Я подписался"), check_subscription))
 
-    app.run_webhook()
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        webhook_url=WEBHOOK_URL
+    )
